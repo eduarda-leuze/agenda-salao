@@ -35,6 +35,8 @@ export type Database = {
           inicio: string
           lembrete_enviado: boolean
           lembrete_enviado_em: string | null
+          lembrete_1h_enviado: boolean
+          lembrete_1h_enviado_em: string | null
           observacoes: string | null
           origem: string | null
           origem_online: boolean
@@ -49,6 +51,8 @@ export type Database = {
           inicio: string
           lembrete_enviado?: boolean
           lembrete_enviado_em?: string | null
+          lembrete_1h_enviado?: boolean
+          lembrete_1h_enviado_em?: string | null
           observacoes?: string | null
           origem?: string | null
           origem_online?: boolean
@@ -63,6 +67,8 @@ export type Database = {
           inicio?: string
           lembrete_enviado?: boolean
           lembrete_enviado_em?: string | null
+          lembrete_1h_enviado?: boolean
+          lembrete_1h_enviado_em?: string | null
           observacoes?: string | null
           origem?: string | null
           origem_online?: boolean

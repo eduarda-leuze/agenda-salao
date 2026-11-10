@@ -23,6 +23,7 @@ import { Route as AuthenticatedProfissionaisRouteImport } from './routes/_authen
 import { Route as AuthenticatedServicosRouteImport } from './routes/_authenticated/servicos'
 import { Route as AuthenticatedWhatsappRouteImport } from './routes/_authenticated/whatsapp'
 import { Route as ApiWhatsappRouteImport } from './routes/api/whatsapp'
+import { Route as ApiLembretesRouteImport } from './routes/api/lembretes'
 import { Route as ApiPublicMarcaPathRouteImport } from './routes/api/public/marca/$path'
 
 const IndexRoute = IndexRouteImport.update({
@@ -96,6 +97,11 @@ const ApiWhatsappRoute = ApiWhatsappRouteImport.update({
   path: '/api/whatsapp',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiLembretesRoute = ApiLembretesRouteImport.update({
+  id: '/api/lembretes',
+  path: '/api/lembretes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicMarcaPathRoute = ApiPublicMarcaPathRouteImport.update({
   id: '/api/public/marca/$path',
   path: '/api/public/marca/$path',
@@ -116,6 +122,7 @@ export interface FileRoutesByFullPath {
   '/servicos': typeof AuthenticatedServicosRoute
   '/whatsapp': typeof AuthenticatedWhatsappRoute
   '/api/whatsapp': typeof ApiWhatsappRoute
+  '/api/lembretes': typeof ApiLembretesRoute
   '/api/public/marca/$path': typeof ApiPublicMarcaPathRoute
 }
 export interface FileRoutesByTo {
@@ -132,6 +139,7 @@ export interface FileRoutesByTo {
   '/servicos': typeof AuthenticatedServicosRoute
   '/whatsapp': typeof AuthenticatedWhatsappRoute
   '/api/whatsapp': typeof ApiWhatsappRoute
+  '/api/lembretes': typeof ApiLembretesRoute
   '/api/public/marca/$path': typeof ApiPublicMarcaPathRoute
 }
 export interface FileRoutesById {
@@ -150,6 +158,7 @@ export interface FileRoutesById {
   '/_authenticated/servicos': typeof AuthenticatedServicosRoute
   '/_authenticated/whatsapp': typeof AuthenticatedWhatsappRoute
   '/api/whatsapp': typeof ApiWhatsappRoute
+  '/api/lembretes': typeof ApiLembretesRoute
   '/api/public/marca/$path': typeof ApiPublicMarcaPathRoute
 }
 export interface FileRouteTypes {
@@ -168,6 +177,7 @@ export interface FileRouteTypes {
     | '/servicos'
     | '/whatsapp'
     | '/api/whatsapp'
+    | '/api/lembretes'
     | '/api/public/marca/$path'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -184,6 +194,7 @@ export interface FileRouteTypes {
     | '/servicos'
     | '/whatsapp'
     | '/api/whatsapp'
+    | '/api/lembretes'
     | '/api/public/marca/$path'
   id:
     | '__root__'
@@ -201,6 +212,7 @@ export interface FileRouteTypes {
     | '/_authenticated/servicos'
     | '/_authenticated/whatsapp'
     | '/api/whatsapp'
+    | '/api/lembretes'
     | '/api/public/marca/$path'
   fileRoutesById: FileRoutesById
 }
@@ -210,6 +222,7 @@ export interface RootRouteChildren {
   AgendarRoute: typeof AgendarRoute
   AuthRoute: typeof AuthRoute
   ApiWhatsappRoute: typeof ApiWhatsappRoute
+  ApiLembretesRoute: typeof ApiLembretesRoute
   ApiPublicMarcaPathRoute: typeof ApiPublicMarcaPathRoute
 }
 
@@ -313,6 +326,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiWhatsappRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/lembretes': {
+      id: '/api/lembretes'
+      path: '/api/lembretes'
+      fullPath: '/api/lembretes'
+      preLoaderRoute: typeof ApiLembretesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/marca/$path': {
       id: '/api/public/marca/$path'
       path: '/api/public/marca/$path'
@@ -356,6 +376,7 @@ const rootRouteChildren: RootRouteChildren = {
   AgendarRoute: AgendarRoute,
   AuthRoute: AuthRoute,
   ApiWhatsappRoute: ApiWhatsappRoute,
+  ApiLembretesRoute: ApiLembretesRoute,
   ApiPublicMarcaPathRoute: ApiPublicMarcaPathRoute,
 }
 export const routeTree = rootRouteImport

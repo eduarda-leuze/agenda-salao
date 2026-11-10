@@ -1,5 +1,27 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { notificar, msgConfirmacao, formatarTelefone } from "./notificacoes";
+
+/** Envia confirmação de agendamento via WhatsApp para o cliente (criado pela agenda admin). */
+export const notificarAgendamento = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(z.object({ agendamentoId: z.string().uuid() }))
+  .handler(async ({ data }) => {
+    try {
+      const { createDb } = await import("./bot/db");
+      const db = createDb();
+      const [ag] = await db.dadosAgendamento(data.agendamentoId);
+      if (!ag) return { ok: false };
+      await notificar(
+        formatarTelefone(ag.cliente_telefone),
+        msgConfirmacao(ag.cliente_nome, ag.servico_nome, ag.profissional_nome, ag.inicio),
+      );
+      return { ok: true };
+    } catch {
+      return { ok: false };
+    }
+  });
 
 export const getSalon = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

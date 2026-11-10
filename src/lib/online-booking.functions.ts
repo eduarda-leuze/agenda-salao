@@ -1,6 +1,7 @@
 import { createServerFn } from '@tanstack/react-start';
 import { bookingSchema, slotsSchema, catalogSchema, resultSchema } from './online-booking';
 import { createAnonClient } from '@/integrations/supabase/client';
+import { notificar, msgConfirmacao, msgNovoPedido, formatarTelefone } from './notificacoes';
 
 export const publicCatalog = createServerFn({ method: 'GET' }).handler(async () => {
   const { data, error } = await createAnonClient().rpc('online_catalogo');
@@ -43,5 +44,22 @@ export const publicBook = createServerFn({ method: 'POST' })
           : 'Não foi possível solicitar este horário. Tente novamente.',
       );
     }
-    return resultSchema.parse(result);
+    const parsed = resultSchema.parse(result);
+
+    // Notificações WhatsApp (fire-and-forget: não bloqueia a resposta ao cliente)
+    const telFormatado = formatarTelefone(data.telefone);
+    notificar(
+      telFormatado,
+      msgConfirmacao(data.nome, parsed.servico, parsed.profissional, parsed.inicio),
+    ).catch(() => {});
+
+    const ownerPhone = process.env['OWNER_PHONE'];
+    if (ownerPhone) {
+      notificar(
+        formatarTelefone(ownerPhone),
+        msgNovoPedido(data.nome, data.telefone, parsed.servico, parsed.profissional, parsed.inicio),
+      ).catch(() => {});
+    }
+
+    return parsed;
   });

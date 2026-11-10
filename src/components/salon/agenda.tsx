@@ -39,6 +39,7 @@ import {
   type Status,
 } from "@/lib/br";
 import { toast } from "sonner";
+import { notificarAgendamento } from "@/lib/salon.functions";
 type Appointment = Tables<"agendamentos">;
 export function Agenda({ date, view }: { date: string; view: "dia" | "semana" | "lista" }) {
   const d = useSalon();
@@ -548,6 +549,8 @@ function AppointmentForm({
           await supabase.from("agendamentos").delete().eq("id", a.id);
           throw ie;
         }
+        // Envia confirmação via WhatsApp (fire-and-forget)
+        notificarAgendamento({ data: { agendamentoId: a.id } }).catch(() => {});
       }
       toast.success(existing ? "Agendamento remarcado." : "Agendamento criado.");
       await qc.invalidateQueries({ queryKey: ["salon"] });

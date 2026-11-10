@@ -90,6 +90,8 @@ function mocks({ ctx = CTX, historico = [] as Contexto["historico"], registrarRe
     criar: async () => ({ confirmado: true }),
     meusAgendamentos: async () => [],
     cancelar: async () => ({ cancelado: true }),
+    proximoAgendamento: async () => [],
+    confirmarAgendamento: async () => null,
   };
   const bird = { enviarTexto: async (to: string, t: string) => { ch.enviar.push([to, t]); return ["wam_robo_1"]; } };
   const fila = [...ia];

@@ -82,6 +82,37 @@ export function createDb(env: Env = process.env, fetchImpl: FetchLike = fetch) {
       }),
     pausar: (telefone: string, horas: number, atencao: boolean) =>
       rpc("bot_pausar", { p_telefone: telefone, p_horas: horas, p_atencao: atencao }),
+    proximoAgendamento: (telefone: string) =>
+      rpc<{ id: string; servico_nome: string; profissional_nome: string; inicio: string }[]>(
+        "bot_proximo_agendamento",
+        { p_telefone: telefone },
+      ),
+    confirmarAgendamento: (telefone: string, id: string) =>
+      rpc("bot_confirmar_agendamento", { p_telefone: telefone, p_agendamento_id: id }),
+    agendamentosParaLembrete: () =>
+      rpc<
+        {
+          id: string;
+          tipo: "24h" | "1h";
+          cliente_telefone: string;
+          cliente_nome: string;
+          servico_nome: string;
+          profissional_nome: string;
+          inicio: string;
+        }[]
+      >("bot_agendamentos_para_lembrete", {}),
+    marcarLembrete: (id: string, tipo: "24h" | "1h") =>
+      rpc("bot_marcar_lembrete", { p_agendamento_id: id, p_tipo: tipo }),
+    dadosAgendamento: (id: string) =>
+      rpc<
+        {
+          cliente_telefone: string;
+          cliente_nome: string;
+          servico_nome: string;
+          profissional_nome: string;
+          inicio: string;
+        }[]
+      >("bot_dados_agendamento", { p_agendamento_id: id }),
   };
 }
 export type Db = ReturnType<typeof createDb>;

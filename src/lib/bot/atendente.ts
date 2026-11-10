@@ -149,6 +149,14 @@ export function historicoParaMensagens(historico: Contexto["historico"]): Mensag
 
 export type Acao = { nome: string; args: Record<string, unknown> };
 
+export type InfoAgendado = {
+  nomeCliente: string;
+  telefoneCliente: string;
+  servicoNome: string;
+  profissionalNome: string;
+  inicio: string;
+};
+
 /** Ferramentas reais (gravam no banco) ou simuladas (só leitura; para a área de teste). */
 export function criarExecutor({
   db,
@@ -156,12 +164,14 @@ export function criarExecutor({
   ctx,
   simulacao = false,
   acoes = [],
+  onAgendar,
 }: {
   db: Pick<Db, "horarios" | "criar" | "meusAgendamentos" | "cancelar" | "pausar">;
   telefone: string;
   ctx: Contexto;
   simulacao?: boolean;
   acoes?: Acao[];
+  onAgendar?: (info: InfoAgendado) => void;
 }): Executor {
   return async function executar(nome, args) {
     acoes.push({ nome, args });
@@ -175,12 +185,28 @@ export function criarExecutor({
         if (!ctx.cliente?.nome && !String(s("nome_cliente") || "").trim()) {
           throw new Error("Pergunte o nome completo da cliente antes de agendar.");
         }
+        const serv = (ctx.servicos || []).find((x) => x.id === s("servico_id"));
+        const prof = (ctx.profissionais || []).find((x) => x.id === s("profissional_id"));
         if (simulacao) {
-          const serv = (ctx.servicos || []).find((x) => x.id === s("servico_id"));
-          const prof = (ctx.profissionais || []).find((x) => x.id === s("profissional_id"));
           return { simulado: true, confirmado: true, servico: serv?.nome, profissional: prof?.nome, inicio: s("inicio") };
         }
-        return db.criar(telefone, s("nome_cliente"), s("servico_id") ?? "", s("profissional_id") ?? "", s("inicio") ?? "");
+        const result = await db.criar(
+          telefone,
+          s("nome_cliente"),
+          s("servico_id") ?? "",
+          s("profissional_id") ?? "",
+          s("inicio") ?? "",
+        );
+        if (onAgendar) {
+          onAgendar({
+            nomeCliente: String(s("nome_cliente") || ctx.cliente?.nome || "Cliente"),
+            telefoneCliente: telefone,
+            servicoNome: serv?.nome ?? "Serviço",
+            profissionalNome: prof?.nome ?? "Profissional",
+            inicio: s("inicio") ?? "",
+          });
+        }
+        return result;
       }
       case "meus_agendamentos":
         return db.meusAgendamentos(telefone);

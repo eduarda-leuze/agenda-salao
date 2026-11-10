@@ -2,6 +2,7 @@
 import { createDb, type Db, type Env, type FetchLike } from "./db";
 import { createBird, type Bird } from "./bird";
 import { criarExecutor, historicoParaMensagens, responder } from "./atendente";
+import { msgNovoPedido, msgConfirmadoPorCliente, msgCanceladoPorCliente, formatarTelefone } from "../notificacoes";
 
 const EVENTOS_SAIDA = new Set(["whatsapp.accepted", "whatsapp.sent", "whatsapp.delivered"]);
 const MSG_SO_TEXTO = "Oi! Por aqui eu consigo ler só mensagens de texto 😊 Pode me escrever o que você precisa?";
@@ -39,7 +40,10 @@ export function extrairTexto(data: EventoBird["data"]): string {
 
 type Deps = {
   env?: Env;
-  db?: Pick<Db, "registrar" | "contexto" | "pausar" | "horarios" | "criar" | "meusAgendamentos" | "cancelar">;
+  db?: Pick<
+    Db,
+    "registrar" | "contexto" | "pausar" | "horarios" | "criar" | "meusAgendamentos" | "cancelar" | "proximoAgendamento" | "confirmarAgendamento"
+  >;
   bird?: Bird;
   fetchImpl?: FetchLike;
   esperar?: (ms: number) => Promise<void>;
@@ -77,9 +81,69 @@ export async function processarEvento(evento: EventoBird, webhookId: string | nu
     let resposta: string;
     if (!texto) {
       resposta = MSG_SO_TEXTO;
+    } else if (texto === "1" || texto === "2") {
+      // Confirmação ou cancelamento rápido via lembrete
+      const proximo = await db.proximoAgendamento(tel).catch(() => null);
+      const ag = proximo?.[0];
+      if (ag) {
+        const nomeCliente = ctx.cliente?.nome || "Cliente";
+        if (texto === "1") {
+          await db.confirmarAgendamento(tel, ag.id).catch(() => {});
+          resposta = msgConfirmadoPorCliente(nomeCliente, ag.servico_nome, ag.inicio);
+        } else {
+          await db.cancelar(tel, ag.id).catch(() => {});
+          resposta = msgCanceladoPorCliente(nomeCliente);
+        }
+        const ids = await bird.enviarTexto(formatarTelefone(tel), resposta);
+        await db.registrar(tel, null, "robo", resposta, null, ids[0] || null);
+        return texto === "1" ? "confirmado" : "cancelado";
+      }
+      // Sem agendamento futuro: cai no bot de IA abaixo
+      try {
+        const ownerPhone = env["OWNER_PHONE"];
+        const executar = criarExecutor({
+          db,
+          telefone: tel,
+          ctx,
+          ...(ownerPhone
+            ? {
+                onAgendar: (info) => {
+                  bird
+                    .enviarTexto(formatarTelefone(ownerPhone), msgNovoPedido(info.nomeCliente, tel, info.servicoNome, info.profissionalNome, info.inicio))
+                    .catch(() => {});
+                },
+              }
+            : {}),
+        });
+        resposta = await responder({
+          ctx,
+          mensagens: historicoParaMensagens(ctx.historico),
+          executar,
+          env,
+          ...(deps.fetchImpl ? { fetchImpl: deps.fetchImpl } : {}),
+        });
+      } catch (e) {
+        log.error("Falha na IA:", e);
+        resposta = MSG_ERRO;
+        await db.pausar(tel, 12, true).catch(() => {});
+      }
     } else {
       try {
-        const executar = criarExecutor({ db, telefone: tel, ctx });
+        const ownerPhone = env["OWNER_PHONE"];
+        const executar = criarExecutor({
+          db,
+          telefone: tel,
+          ctx,
+          ...(ownerPhone
+            ? {
+                onAgendar: (info) => {
+                  bird
+                    .enviarTexto(formatarTelefone(ownerPhone), msgNovoPedido(info.nomeCliente, tel, info.servicoNome, info.profissionalNome, info.inicio))
+                    .catch(() => {});
+                },
+              }
+            : {}),
+        });
         resposta = await responder({
           ctx,
           mensagens: historicoParaMensagens(ctx.historico),
@@ -94,7 +158,7 @@ export async function processarEvento(evento: EventoBird, webhookId: string | nu
       }
     }
     if (!resposta) return "sem-resposta";
-    const ids = await bird.enviarTexto(tel, resposta);
+    const ids = await bird.enviarTexto(formatarTelefone(tel), resposta);
     await db.registrar(tel, null, "robo", resposta, null, ids[0] || null);
     for (const extra of ids.slice(1)) await db.registrar(tel, null, "robo", "", null, extra);
     return "respondido";
