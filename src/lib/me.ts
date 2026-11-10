@@ -18,7 +18,7 @@ export const meQuery = queryOptions({
       supabase.from("user_roles").select("role").eq("user_id", u.user.id),
       supabase.from("profissionais").select("id, nome").eq("user_id", u.user.id).maybeSingle(),
     ]);
-    const isAdmin = !!roles?.some((r) => r.role === "admin");
+    const isAdmin = !!roles?.some((r) => r.role === "admin" || r.role === "profissional");
     return {
       userId: u.user.id,
       email: u.user.email ?? "",

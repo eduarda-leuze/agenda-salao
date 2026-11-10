@@ -468,6 +468,7 @@ function AppointmentForm({
     ),
     [slot, setSlot] = useState(""),
     [notes, setNotes] = useState(existing?.observacoes ?? ""),
+    [duracaoMin, setDuracaoMin] = useState<number | null>(null),
     [busy, setBusy] = useState(false);
   const totals = serviceTotals(d.services.filter((s) => services.includes(s.id)));
   const {
@@ -494,6 +495,8 @@ function AppointmentForm({
       toast.error("Selecione um horário livre.");
       return;
     }
+    const duracaoFinal = duracaoMin ?? totals.minutes;
+    const fimCustom = new Date(new Date(chosen.inicio).getTime() + duracaoFinal * 60_000).toISOString();
     setBusy(true);
     try {
       let cid = client;
@@ -514,7 +517,7 @@ function AppointmentForm({
           .from("agendamentos")
           .update({
             inicio: chosen.inicio,
-            fim: chosen.fim,
+            fim: fimCustom,
             profissional_id: chosen.profissional_id,
             observacoes: notes,
             cliente_id: cid,
@@ -528,7 +531,7 @@ function AppointmentForm({
             cliente_id: cid,
             profissional_id: chosen.profissional_id,
             inicio: chosen.inicio,
-            fim: chosen.fim,
+            fim: fimCustom,
             observacoes: notes,
           })
           .select("id")
@@ -627,6 +630,7 @@ function AppointmentForm({
                         prev.includes(s.id) ? prev.filter((id) => id !== s.id) : [...prev, s.id],
                       );
                       setSlot("");
+                      setDuracaoMin(null);
                     }}
                   />
                   <span className="flex-1">
@@ -637,8 +641,28 @@ function AppointmentForm({
                 </label>
               ))}
           </div>
-          <div className="mt-3 flex justify-between text-sm">
-            <span className="text-muted-foreground">{totals.minutes} minutos</span>
+          <div className="mt-3 flex items-center justify-between text-sm">
+            <label className="flex items-center gap-2 text-muted-foreground">
+              <Clock className="size-3.5" />
+              <input
+                type="number"
+                min={5}
+                max={480}
+                value={duracaoMin ?? totals.minutes}
+                onChange={(e) => setDuracaoMin(Number(e.target.value) || totals.minutes)}
+                className="w-16 rounded border bg-background px-1.5 py-0.5 text-center text-sm"
+              />
+              min
+              {duracaoMin !== null && duracaoMin !== totals.minutes && (
+                <button
+                  type="button"
+                  className="text-xs text-muted-foreground underline"
+                  onClick={() => setDuracaoMin(null)}
+                >
+                  padrão ({totals.minutes})
+                </button>
+              )}
+            </label>
             <strong>{fmtBRL(totals.price)}</strong>
           </div>
         </div>
