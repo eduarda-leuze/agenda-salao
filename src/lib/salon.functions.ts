@@ -15,7 +15,7 @@ export const notificarAgendamento = createServerFn({ method: "POST" })
       if (!ag) return { ok: false };
       await notificar(
         formatarTelefone(ag.cliente_telefone),
-        msgConfirmacao(ag.cliente_nome, ag.servico_nome, ag.profissional_nome, ag.inicio),
+        msgConfirmacao(ag.cliente_nome, ag.servico_nome, ag.profissional_nome, ag.inicio, ag.profissional_telefone),
       );
       return { ok: true };
     } catch {

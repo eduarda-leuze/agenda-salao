@@ -48,9 +48,14 @@ export const publicBook = createServerFn({ method: 'POST' })
 
     // Notificações WhatsApp (fire-and-forget: não bloqueia a resposta ao cliente)
     const telFormatado = formatarTelefone(data.telefone);
+    const { data: profData } = await createAnonClient()
+      .from("profissionais")
+      .select("telefone")
+      .eq("id", data.profissionalId)
+      .maybeSingle();
     notificar(
       telFormatado,
-      msgConfirmacao(data.nome, parsed.servico, parsed.profissional, parsed.inicio),
+      msgConfirmacao(data.nome, parsed.servico, parsed.profissional, parsed.inicio, profData?.telefone),
     ).catch(() => {});
 
     const ownerPhone = process.env['OWNER_PHONE'];

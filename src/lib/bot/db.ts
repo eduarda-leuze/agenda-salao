@@ -110,6 +110,7 @@ export function createDb(env: Env = process.env, fetchImpl: FetchLike = fetch) {
           cliente_nome: string;
           servico_nome: string;
           profissional_nome: string;
+          profissional_telefone: string | null;
           inicio: string;
         }[]
       >("bot_dados_agendamento", { p_agendamento_id: id }),

@@ -22,8 +22,11 @@ export function formatarTelefone(tel: string): string {
   return `+55${d}`;
 }
 
-export function msgConfirmacao(nome: string, servico: string, profissional: string, inicio: string): string {
-  return `Olá, ${nome}! 🎉\n\nSeu agendamento está confirmado:\n\n*${servico}* com ${profissional}\n📅 ${fmtDataHora(inicio)}\n\nAté lá! Para cancelar, responda *2*.`;
+export function msgConfirmacao(nome: string, servico: string, profissional: string, inicio: string, profissionalTelefone?: string | null): string {
+  const link = profissionalTelefone
+    ? `\n\n💬 Fale com ${profissional}: wa.me/${profissionalTelefone.replace(/\D/g, "")}`
+    : "";
+  return `Olá, ${nome}! 🎉\n\nSeu agendamento está confirmado:\n\n*${servico}* com ${profissional}\n📅 ${fmtDataHora(inicio)}${link}\n\nPara cancelar, responda *2*.`;
 }
 
 export function msgLembrete24h(nome: string, servico: string, profissional: string, inicio: string): string {
